@@ -4,11 +4,14 @@ use candle_examples::hub_load_safetensors;
 use candle_nn::{Module, VarBuilder};
 use candle_transformers::generation::LogitsProcessor;
 use candle_transformers::models::gemma2::{Config as GemmaConfig, Model as GemmaModel};
+use dotenvy::dotenv;
 use hf_hub::api::sync::ApiBuilder;
+use std::env;
 use std::error::Error;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokenizers::Tokenizer;
+
 // Custom transformer module to override the last layer
 struct CustomGemmaModel {
     model: GemmaModel,
@@ -128,6 +131,7 @@ fn load_from_hub(model_id: &str, hf_token: &str) -> Result<ConfigFiles> {
 }
 
 fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
+    dotenv().ok();
     // Set the device (CPU or GPU)
     let device: Device = Device::Cpu;
     // let device = if cuda_is_available() {
@@ -137,8 +141,8 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     // } else {
     //     Device::Cpu
     // };
-    let hf_token = "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";
-    let config_files = load_from_hub("google/gemma-2-2b-it", hf_token)?;
+    let hf_token = env::var("HF_TOKEN").expect("HF_TOKEN not set in .env file");
+    let config_files = load_from_hub("google/gemma-2-2b-it", &hf_token)?;
 
     let tokenizer = Tokenizer::from_file(config_files.tokenizer)?;
     let config: GemmaConfig = serde_json::from_slice(&std::fs::read(config_files.config)?)?;
